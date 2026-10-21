@@ -21,15 +21,17 @@ small,.mu{color:var(--mu);font-size:13px}.hide{display:none}code{background:#0f1
  <div class="card"><span id="who" class="mu"></span> <button class="s" id="out" style="width:auto;padding:6px 12px">Sign out</button></div>
 
  <div class="card"><h2>1. Connect bot to my hotspot</h2>
-  <small>On the bot: hold the touch sensor 3 sec until the screen shows "Setup mode". Then join WiFi <b>EyesBot-Setup</b> on this phone (keep it connected, turn mobile data off), come back to this tab and tap Send.</small>
+  <small>On the bot: it starts in "Setup mode" by itself the first time. Later, hold the BOOT button 3 sec until the screen shows "Setup mode". Then join WiFi <b>EyesBot-Setup</b> on this phone (keep it connected, turn mobile data off), come back to this tab and tap Send.</small>
   <input id="ss" placeholder="Hotspot name" autocomplete="off">
   <input id="pw" type="password" placeholder="Hotspot password" autocomplete="off">
   <button id="send">Send to bot</button>
   <small>Hotspot password is not stored anywhere. It goes straight to your bot.</small></div>
 
- <div class="card"><h2>2. Eyes style</h2><div class="g" id="styles"></div></div>
+ <div class="card"><h2>2. Screen</h2><div class="g" id="scr" style="grid-template-columns:1fr 1fr 1fr"></div></div>
 
- <div class="card"><h2>3. Show notifications</h2><div id="tg"></div>
+ <div class="card"><h2>3. Eyes style</h2><div class="g" id="styles"></div></div>
+
+ <div class="card"><h2>4. Show notifications</h2><div id="tg"></div>
   <small>Phone alerts come from the MacroDroid macros on your Android phone.</small></div>
 
  <div class="card"><small>Your bot key: <code id="key"></code><br>Changes reach the bot within ~10 seconds.</small></div>
@@ -41,20 +43,20 @@ import {getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,signOut} f
 import {getDatabase,ref,get,set,update} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 // ====== PASTE YOUR FIREBASE CONFIG HERE ======
-const cfg= {
+const firebaseConfig = {
   apiKey: "AIzaSyB3U9IPwFVDjiDTGX0JsAHxusdP9gYd96w",
   authDomain: "eyesbot-hub.firebaseapp.com",
+  databaseURL: "https://eyesbot-hub-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "eyesbot-hub",
   storageBucket: "eyesbot-hub.firebasestorage.app",
   messagingSenderId: "644917230784",
-  appId: "1:644917230784:web:544a55dc1c70668a344125",
- databaseURL:"https://eyesbot-hub-default-rtdb.asia-southeast1.firebasedatabase.app",
+  appId: "1:644917230784:web:544a55dc1c70668a344125"
 };
-// =============================================
 
 const app=initializeApp(cfg),auth=getAuth(app),db=getDatabase(app);
 const $=id=>document.getElementById(id);
 const STYLES=["👀 Normal","💖 Heart","😊 Happy","😴 Sleep","😠 Angry","😲 Surprised"];
+const SCREENS=[["eyes","👀 Eyes"],["clock","🕒 Clock"],["off","⚫ Off"]];
 const APPS=[["whatsapp","WhatsApp"],["instagram","Instagram"],["facebook","Facebook"],["call","Missed calls"],["sms","SMS"]];
 let key="",uid="";
 
@@ -79,6 +81,9 @@ onAuthStateChanged(auth,async u=>{
 });
 
 function render(d){
+  $("scr").innerHTML="";
+  SCREENS.forEach(([v,n])=>{const b=document.createElement("button");b.textContent=n;if((d.screen||"eyes")===v)b.className="on";
+    b.onclick=async()=>{await update(ref(db,"bots/"+key),{screen:v});d.screen=v;render(d)};$("scr").appendChild(b)});
   $("styles").innerHTML="";
   STYLES.forEach((n,i)=>{const b=document.createElement("button");b.textContent=n;if(d.style===i)b.className="on";
     b.onclick=async()=>{await update(ref(db,"bots/"+key),{style:i});d.style=i;render(d)};$("styles").appendChild(b)});
